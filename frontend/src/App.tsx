@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
 import './App.css'
 
 type InventoryItem = {
@@ -69,6 +69,189 @@ type ModuleDetail = {
   description: string
   highlights: string[]
 }
+
+type Company = {
+  companyId: number
+  name: string
+  country: string
+  status: string
+}
+
+type Subsidiary = {
+  subsidiaryId: number
+  companyId: number
+  name: string
+}
+
+type Site = {
+  siteId: number
+  subsidiaryId: number
+  name: string
+  type: string
+}
+
+type Warehouse = {
+  warehouseId: number
+  siteId: number
+  name: string
+}
+
+type LocationItem = {
+  locationId: number
+  warehouseId: number
+  code: string
+}
+
+type CategoryAdmin = {
+  categoryId: number
+  name: string
+}
+
+type ProductAdmin = {
+  productId: number
+  sku: string
+  description: string
+  categoryId: number
+}
+
+type UserAdmin = {
+  userId: number
+  username: string
+  displayName: string
+  email: string
+  profileId: number
+  status: string
+}
+
+type UserRole = {
+  userId: number
+  roleId: number
+}
+
+type RoleAdmin = {
+  roleId: number
+  name: string
+  description: string
+}
+
+type ProfileAdmin = {
+  profileId: number
+  name: string
+  description: string
+}
+
+type UserProfile = {
+  username: string
+  displayName: string
+  email: string
+  profile: string
+  roles: string[]
+}
+
+type AdminItem = Record<string, string | number | null>
+
+type AdminField = {
+  key: string
+  label: string
+  type: 'text' | 'number'
+}
+
+type AdminResourceConfig = {
+  endpoint: string
+  fields: AdminField[]
+  columns: { key: string; label: string }[]
+}
+
+type AdminResource = 'Subsidiarias' | 'Sedes' | 'Bodegas' | 'Ubicaciones' | 'Categorías' | 'Productos'
+
+const adminResourceConfig: Record<AdminResource, AdminResourceConfig> = {
+  Subsidiarias: {
+    endpoint: 'subsidiaries',
+    fields: [
+      { key: 'companyId', label: 'Empresa (CompanyId)', type: 'number' },
+      { key: 'name', label: 'Nombre', type: 'text' },
+    ],
+    columns: [
+      { key: 'subsidiaryId', label: 'ID' },
+      { key: 'companyId', label: 'CompanyId' },
+      { key: 'name', label: 'Nombre' },
+    ],
+  },
+  Sedes: {
+    endpoint: 'sites',
+    fields: [
+      { key: 'subsidiaryId', label: 'Subsidiaria (SubsidiaryId)', type: 'number' },
+      { key: 'name', label: 'Nombre', type: 'text' },
+      { key: 'type', label: 'Tipo', type: 'text' },
+    ],
+    columns: [
+      { key: 'siteId', label: 'ID' },
+      { key: 'subsidiaryId', label: 'Subsidiaria' },
+      { key: 'name', label: 'Nombre' },
+      { key: 'type', label: 'Tipo' },
+    ],
+  },
+  Bodegas: {
+    endpoint: 'warehouses',
+    fields: [
+      { key: 'siteId', label: 'Sede (SiteId)', type: 'number' },
+      { key: 'name', label: 'Nombre', type: 'text' },
+    ],
+    columns: [
+      { key: 'warehouseId', label: 'ID' },
+      { key: 'siteId', label: 'Sede' },
+      { key: 'name', label: 'Nombre' },
+    ],
+  },
+  Ubicaciones: {
+    endpoint: 'locations',
+    fields: [
+      { key: 'warehouseId', label: 'Bodega (WarehouseId)', type: 'number' },
+      { key: 'code', label: 'Código', type: 'text' },
+    ],
+    columns: [
+      { key: 'locationId', label: 'ID' },
+      { key: 'warehouseId', label: 'Bodega' },
+      { key: 'code', label: 'Código' },
+    ],
+  },
+  Categorías: {
+    endpoint: 'categories',
+    fields: [
+      { key: 'name', label: 'Nombre', type: 'text' },
+    ],
+    columns: [
+      { key: 'categoryId', label: 'ID' },
+      { key: 'name', label: 'Nombre' },
+    ],
+  },
+  Productos: {
+    endpoint: 'products',
+    fields: [
+      { key: 'sku', label: 'SKU', type: 'text' },
+      { key: 'description', label: 'Descripción', type: 'text' },
+      { key: 'categoryId', label: 'Categoría (CategoryId)', type: 'number' },
+    ],
+    columns: [
+      { key: 'productId', label: 'ID' },
+      { key: 'sku', label: 'SKU' },
+      { key: 'description', label: 'Descripción' },
+      { key: 'categoryName', label: 'Categoría' },
+    ],
+  },
+}
+
+const createEmptyAdminForm = (resource: AdminResource) =>
+  Object.fromEntries(adminResourceConfig[resource].fields.map((field) => [field.key, ''])) as Record<string, string>
+
+const adminResources: AdminResource[] = [
+  'Subsidiarias',
+  'Sedes',
+  'Bodegas',
+  'Ubicaciones',
+  'Categorías',
+  'Productos',
+]
 
 const modules = [
   'Dashboard Ejecutivo',
@@ -238,6 +421,12 @@ function App() {
   const [production, setProduction] = useState<ProductionMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedModule, setSelectedModule] = useState(modules[0])
+  const [selectedAdminResource, setSelectedAdminResource] = useState<AdminResource>('Subsidiarias')
+  const [adminItems, setAdminItems] = useState<AdminItem[]>([])
+  const [adminLoading, setAdminLoading] = useState(false)
+  const [adminSelectedId, setAdminSelectedId] = useState<number | null>(null)
+  const [adminStatus, setAdminStatus] = useState<string | null>(null)
+  const [adminFormState, setAdminFormState] = useState<Record<string, string>>(() => createEmptyAdminForm('Subsidiarias'))
   const [agents, setAgents] = useState<AgentStatus[]>(agentEndpoints.map((agent) => ({ ...agent, status: 'pending' })))
 
   useEffect(() => {
@@ -354,6 +543,130 @@ function App() {
   )
 
   const selectedDetail = moduleDetails[selectedModule]
+
+  const resetAdminForm = () => {
+    setAdminSelectedId(null)
+    setAdminStatus(null)
+    setAdminFormState(createEmptyAdminForm(selectedAdminResource))
+  }
+
+  const handleSelectAdminResource = (resource: AdminResource) => {
+    setSelectedAdminResource(resource)
+    setAdminItems([])
+    setAdminSelectedId(null)
+    setAdminStatus(null)
+    setAdminFormState(createEmptyAdminForm(resource))
+  }
+
+  const handleAdminFieldChange = (key: string, event: ChangeEvent<HTMLInputElement>) => {
+    setAdminFormState((previous) => ({ ...previous, [key]: event.target.value }))
+  }
+
+  const handleAdminSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setAdminLoading(true)
+    setAdminStatus(null)
+
+    try {
+      const endpoint = adminResourceConfig[selectedAdminResource].endpoint
+      const payload = Object.fromEntries(
+        adminResourceConfig[selectedAdminResource].fields.map((field) => [
+          field.key,
+          field.type === 'number' ? Number(adminFormState[field.key] || 0) : adminFormState[field.key] || '',
+        ]),
+      )
+
+      const url = adminSelectedId
+        ? `http://127.0.0.1:5210/api/admin/${endpoint}/${adminSelectedId}`
+        : `http://127.0.0.1:5210/api/admin/${endpoint}`
+      const method = adminSelectedId ? 'PUT' : 'POST'
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Error al guardar registro')
+      }
+
+      setAdminStatus(adminSelectedId ? 'Registro actualizado' : 'Registro creado')
+      resetAdminForm()
+      fetchAdminItems(selectedAdminResource)
+    } catch (error) {
+      console.error('Admin save error', error)
+      setAdminStatus('No se pudo guardar el registro')
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
+  const handleAdminEdit = (item: AdminItem) => {
+    setAdminSelectedId(item[adminResourceConfig[selectedAdminResource].columns[0].key] as number)
+    setAdminFormState(
+      Object.fromEntries(
+        adminResourceConfig[selectedAdminResource].fields.map((field) => [
+          field.key,
+          item[field.key] !== undefined && item[field.key] !== null ? String(item[field.key]) : '',
+        ]),
+      ) as Record<string, string>,
+    )
+    setAdminStatus(`Editando ${selectedAdminResource}`)
+  }
+
+  const handleAdminDelete = async (id: number) => {
+    if (!window.confirm('¿Eliminar este registro?')) {
+      return
+    }
+
+    setAdminLoading(true)
+    setAdminStatus(null)
+
+    try {
+      const endpoint = adminResourceConfig[selectedAdminResource].endpoint
+      const response = await fetch(`http://127.0.0.1:5210/api/admin/${endpoint}/${id}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        throw new Error('Error al eliminar registro')
+      }
+
+      setAdminStatus('Registro eliminado')
+      fetchAdminItems(selectedAdminResource)
+    } catch (error) {
+      console.error('Admin delete error', error)
+      setAdminStatus('No se pudo eliminar el registro')
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
+  const fetchAdminItems = async (resource: AdminResource) => {
+    setAdminLoading(true)
+    setAdminStatus(null)
+
+    try {
+      const endpoint = adminResourceConfig[resource].endpoint
+      const response = await fetch(`http://127.0.0.1:5210/api/admin/${endpoint}`)
+      if (!response.ok) {
+        throw new Error('Error al cargar los datos')
+      }
+      setAdminItems(await response.json())
+    } catch (error) {
+      console.error('Admin fetch error', error)
+      setAdminStatus('No se pudieron cargar los datos de administración')
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedModule !== 'Administración') {
+      return
+    }
+    fetchAdminItems(selectedAdminResource)
+  }, [selectedModule, selectedAdminResource])
 
   const activeModuleContent = useMemo(() => {
     switch (selectedModule) {
@@ -613,13 +926,87 @@ function App() {
 
       case 'Administración':
         return (
-          <section className="module-panel">
+          <section className="module-panel admin-module">
             {renderCards([
               { label: 'Usuarios activos', value: '42' },
               { label: 'Roles configurados', value: '5' },
               { label: 'Seguridad', value: 'Fortalecida' },
               { label: 'Auditorías', value: '2 recientes' },
             ])}
+
+            <div className="admin-management">
+              <div className="admin-toolbar">
+                {adminResources.map((resource) => (
+                  <button
+                    key={resource}
+                    type="button"
+                    className={resource === selectedAdminResource ? 'active' : ''}
+                    onClick={() => handleSelectAdminResource(resource)}
+                  >
+                    {resource}
+                  </button>
+                ))}
+              </div>
+
+              <div className="admin-management-grid">
+                <div className="admin-form-card">
+                  <h3>Administrar {selectedAdminResource}</h3>
+                  <form onSubmit={handleAdminSave}>
+                    {adminResourceConfig[selectedAdminResource].fields.map((field) => (
+                      <label key={field.key}>
+                        {field.label}
+                        <input
+                          type={field.type}
+                          value={adminFormState[field.key] ?? ''}
+                          onChange={(event) => handleAdminFieldChange(field.key, event)}
+                        />
+                      </label>
+                    ))}
+                    <div className="admin-actions">
+                      <button type="submit">{adminSelectedId ? 'Actualizar' : 'Crear'}</button>
+                      <button type="button" onClick={resetAdminForm}>Limpiar</button>
+                    </div>
+                    {adminStatus && <p className="admin-status">{adminStatus}</p>}
+                  </form>
+                </div>
+
+                <div className="admin-table-card">
+                  <div className="panel-header">
+                    <h3>Registros de {selectedAdminResource}</h3>
+                    <span>{adminLoading ? 'Cargando...' : `${adminItems.length} registros`}</span>
+                  </div>
+                  <div className="table-panel">
+                    <table>
+                      <thead>
+                        <tr>
+                          {adminResourceConfig[selectedAdminResource].columns.map((column) => (
+                            <th key={column.key}>{column.label}</th>
+                          ))}
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminItems.map((item) => {
+                          const idKey = adminResourceConfig[selectedAdminResource].columns[0].key
+                          const itemId = Number(item[idKey])
+                          return (
+                            <tr key={itemId}>
+                              {adminResourceConfig[selectedAdminResource].columns.map((column) => (
+                                <td key={column.key}>{item[column.key] ?? '—'}</td>
+                              ))}
+                              <td>
+                                <button type="button" onClick={() => handleAdminEdit(item)}>Editar</button>
+                                <button type="button" onClick={() => handleAdminDelete(itemId)}>Eliminar</button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
         )
 
@@ -712,33 +1099,35 @@ function App() {
           {activeModuleContent}
         </section>
 
-        <section className="agent-panel">
-          <div className="agent-panel-header">
-            <div>
-              <h2>Agentes de plataforma</h2>
-              <p>Estado del ecosistema de servicios y acceso directo a documentación relativa.</p>
+        {selectedModule === 'Administración' && (
+          <section className="agent-panel">
+            <div className="agent-panel-header">
+              <div>
+                <h2>Agentes de plataforma</h2>
+                <p>Estado del ecosistema de servicios y acceso directo a documentación relativa.</p>
+              </div>
+              <div className="agent-links">
+                <span>Rutas relativas a agentes</span>
+              </div>
             </div>
-            <div className="agent-links">
-              <span>Rutas relativas a agentes</span>
-            </div>
-          </div>
 
-          <div className="agent-grid">
-            {platformAgents.map((agent) => {
-              const healthStatus = agents.find((item) => item.name === agent.healthName)?.status ?? 'pending'
-              return (
-                <article key={agent.name}>
-                  <h3>{agent.name}</h3>
-                  <p>{agent.role}</p>
-                  <div className="agent-footer">
-                    <span>{healthStatus === 'success' ? 'Live' : healthStatus === 'error' ? 'Error' : 'Inicializando'}</span>
-                    <a href={agent.docPath} target="_blank" rel="noreferrer">Ver agente</a>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
-        </section>
+            <div className="agent-grid">
+              {platformAgents.map((agent) => {
+                const healthStatus = agents.find((item) => item.name === agent.healthName)?.status ?? 'pending'
+                return (
+                  <article key={agent.name}>
+                    <h3>{agent.name}</h3>
+                    <p>{agent.role}</p>
+                    <div className="agent-footer">
+                      <span>{healthStatus === 'success' ? 'Live' : healthStatus === 'error' ? 'Error' : 'Inicializando'}</span>
+                      <a href={agent.docPath} target="_blank" rel="noreferrer">Ver agente</a>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   )
