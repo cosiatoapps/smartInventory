@@ -1,0 +1,14 @@
+CREATE TABLE Company(CompanyId INT PRIMARY KEY, Name VARCHAR(200), Country VARCHAR(100), Status VARCHAR(50));
+CREATE TABLE Subsidiary(SubsidiaryId INT PRIMARY KEY, CompanyId INT, Name VARCHAR(200));
+CREATE TABLE Site(SiteId INT PRIMARY KEY, SubsidiaryId INT, Name VARCHAR(200), Type VARCHAR(50));
+CREATE TABLE Warehouse(WarehouseId INT PRIMARY KEY, SiteId INT, Name VARCHAR(200));
+CREATE TABLE Location(LocationId INT PRIMARY KEY, WarehouseId INT, Code VARCHAR(50));
+CREATE TABLE Category(CategoryId INT PRIMARY KEY, Name VARCHAR(100));
+CREATE TABLE Product(ProductId INT PRIMARY KEY, SKU VARCHAR(50), Description VARCHAR(255), CategoryId INT);
+CREATE TABLE InventoryBalance(InventoryId INT PRIMARY KEY, LocationId INT, ProductId INT, Quantity DECIMAL(18,2), Lot VARCHAR(100), ExpiryDate DATE);
+CREATE TABLE InventoryCount(CountId INT PRIMARY KEY, LocationId INT, CountDate DATETIME);
+CREATE TABLE InventoryCountDetail(DetailId INT PRIMARY KEY, CountId INT, ProductId INT, Quantity DECIMAL(18,2));
+CREATE TABLE Recipe(RecipeId INT PRIMARY KEY, Name VARCHAR(200), YieldPct DECIMAL(5,2));
+CREATE TABLE RecipeIngredient(RecipeId INT, ProductId INT, Quantity DECIMAL(18,2));
+CREATE TABLE ProductionOrder(ProductionId INT PRIMARY KEY, RecipeId INT, QuantityProduced DECIMAL(18,2));
+CREATE TABLE WasteLog(WasteId INT PRIMARY KEY, Category VARCHAR(100), Reason VARCHAR(255), Quantity DECIMAL(18,2), Cost DECIMAL(18,2));

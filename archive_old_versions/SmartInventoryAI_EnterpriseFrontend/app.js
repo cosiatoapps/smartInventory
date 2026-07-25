@@ -1,0 +1,1 @@
+console.log("SmartInventory AI Enterprise MVP");

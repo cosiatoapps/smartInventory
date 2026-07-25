@@ -1,0 +1,1 @@
+Playwright, Vitest, regression suites and coverage enforcement.

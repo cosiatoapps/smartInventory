@@ -1,0 +1,1 @@
+-- SmartInventoryAI schema placeholder

@@ -1,0 +1,1 @@
+Ports, Adapters, Domain, Application, Infrastructure layers.

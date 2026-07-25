@@ -1,0 +1,1 @@
+import {BrowserRouter} from 'react-router-dom';import Shell from './layout/Shell';export default ()=> <BrowserRouter><Shell/></BrowserRouter>;

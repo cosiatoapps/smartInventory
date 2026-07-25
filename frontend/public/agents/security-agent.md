@@ -1,0 +1,1 @@
+OWASP, SAST, DAST, secrets scanning and Zero Trust validation.
