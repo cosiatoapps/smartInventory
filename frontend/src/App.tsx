@@ -1013,7 +1013,23 @@ function App() {
       default:
         return <section className="module-panel">Módulo no disponible</section>
     }
-  }, [selectedModule, inventory, waste, recipes, foodCost, production, metrics, summary, loading])
+  }, [
+    selectedModule,
+    selectedAdminResource,
+    adminItems,
+    adminLoading,
+    adminStatus,
+    adminFormState,
+    adminSelectedId,
+    inventory,
+    waste,
+    recipes,
+    foodCost,
+    production,
+    metrics,
+    summary,
+    loading,
+  ])
 
   return (
     <div className="app-shell">
