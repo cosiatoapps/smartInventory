@@ -39,3 +39,6 @@ SmartInventoryAI.db
 
 # Ignore generated GitHub files
 .gh-pages
+
+# Archive old prototypes or backup versions
+archive_old_versions/

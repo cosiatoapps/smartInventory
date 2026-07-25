@@ -1,1 +1,0 @@
-body{margin:0;font-family:Segoe UI}.app{display:flex}.side{width:260px;background:#0067B1;color:white;height:100vh;padding:20px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:#FFD000;padding:16px;border-radius:12px}.panel{background:#f4f6f8;padding:20px;margin-top:20px;border-radius:12px}
