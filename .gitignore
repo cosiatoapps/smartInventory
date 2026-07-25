@@ -1,0 +1,41 @@
+# Root ignores
+.DS_Store
+*.log
+*.pid
+*.tmp
+*.bak
+*.old
+.vscode/
+.idea/
+.env
+*.local
+
+# Node
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Vite build
+frontend/dist/
+
+# .NET build
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local database file
+SmartInventoryAI.db
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.swp
+*~
+
+# Ignore generated GitHub files
+.gh-pages
