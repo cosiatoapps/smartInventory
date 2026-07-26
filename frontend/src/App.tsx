@@ -1,4 +1,5 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import './App.css'
 
 type InventoryItem = {
@@ -68,84 +69,6 @@ type ModuleDetail = {
   title: string
   description: string
   highlights: string[]
-}
-
-type Company = {
-  companyId: number
-  name: string
-  country: string
-  status: string
-}
-
-type Subsidiary = {
-  subsidiaryId: number
-  companyId: number
-  name: string
-}
-
-type Site = {
-  siteId: number
-  subsidiaryId: number
-  name: string
-  type: string
-}
-
-type Warehouse = {
-  warehouseId: number
-  siteId: number
-  name: string
-}
-
-type LocationItem = {
-  locationId: number
-  warehouseId: number
-  code: string
-}
-
-type CategoryAdmin = {
-  categoryId: number
-  name: string
-}
-
-type ProductAdmin = {
-  productId: number
-  sku: string
-  description: string
-  categoryId: number
-}
-
-type UserAdmin = {
-  userId: number
-  username: string
-  displayName: string
-  email: string
-  profileId: number
-  status: string
-}
-
-type UserRole = {
-  userId: number
-  roleId: number
-}
-
-type RoleAdmin = {
-  roleId: number
-  name: string
-  description: string
-}
-
-type ProfileAdmin = {
-  profileId: number
-  name: string
-  description: string
-}
-
-type UserProfile = {
-  username: string
-  displayName: string
-  email: string
-  profile: string
-  roles: string[]
 }
 
 type AdminItem = Record<string, string | number | null>
@@ -408,8 +331,6 @@ const platformAgents = [
   { name: 'Security Agent', role: 'Seguridad y cumplimiento', docPath: '/agents/security-agent.md', healthName: 'Security API' },
   { name: 'Orchestrator Agent', role: 'Coordinación multi-agente', docPath: '/agents/master-agent.md', healthName: 'Orchestrator API' },
 ]
-
-type PlatformAgent = typeof platformAgents[number]
 
 function App() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
