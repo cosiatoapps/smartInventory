@@ -1,11 +1,17 @@
 BEGIN TRANSACTION;
 
+-- ============================================================================
+-- 1. ESTRUCTURA ORGANIZACIONAL Y UBICACIONES (Existente)
+-- ============================================================================
 INSERT INTO Company (CompanyId, Name, Country, Status) VALUES (1, 'SmartInventory AI Group', 'USA', 'Active');
+
 INSERT INTO Subsidiary (SubsidiaryId, CompanyId, Name) VALUES (1, 1, 'SmartInventory North America');
 INSERT INTO Subsidiary (SubsidiaryId, CompanyId, Name) VALUES (2, 1, 'SmartInventory EMEA');
+
 INSERT INTO Site (SiteId, SubsidiaryId, Name, Type) VALUES (1, 1, 'HQ Nashville', 'Office');
 INSERT INTO Site (SiteId, SubsidiaryId, Name, Type) VALUES (2, 1, 'Distribution Center', 'Warehouse');
 INSERT INTO Site (SiteId, SubsidiaryId, Name, Type) VALUES (3, 2, 'EMEA Logistics', 'Warehouse');
+
 INSERT INTO Warehouse (WarehouseId, SiteId, Name) VALUES (1, 2, 'Central Warehouse');
 INSERT INTO Warehouse (WarehouseId, SiteId, Name) VALUES (2, 2, 'Cold Storage 1');
 INSERT INTO Warehouse (WarehouseId, SiteId, Name) VALUES (3, 3, 'EMEA Hub');
@@ -32,6 +38,9 @@ INSERT INTO Location (LocationId, WarehouseId, Code) VALUES (16, 6, 'K1');
 INSERT INTO Location (LocationId, WarehouseId, Code) VALUES (17, 6, 'K2');
 INSERT INTO Location (LocationId, WarehouseId, Code) VALUES (18, 6, 'L1');
 
+-- ============================================================================
+-- 2. CATEGORÍAS Y PRODUCTOS (Existente)
+-- ============================================================================
 INSERT INTO Category (CategoryId, Name) VALUES (1, 'Dairy');
 INSERT INTO Category (CategoryId, Name) VALUES (2, 'Proteins');
 INSERT INTO Category (CategoryId, Name) VALUES (3, 'Produce');
@@ -80,6 +89,24 @@ INSERT INTO Product (ProductId, SKU, Description, CategoryId) VALUES (1038, 'SKU
 INSERT INTO Product (ProductId, SKU, Description, CategoryId) VALUES (1039, 'SKU-1039', 'Nuts Mix 1kg', 5);
 INSERT INTO Product (ProductId, SKU, Description, CategoryId) VALUES (1040, 'SKU-1040', 'Surface Spray 1L', 6);
 
+-- ============================================================================
+-- 3. UNIDADES DE MEDIDA Y CONVERSIONES (NUEVO)
+-- ============================================================================
+INSERT INTO UnitOfMeasure (UnitOfMeasureId, Code, Name) VALUES (1, 'Kg', 'Kilogramos');
+INSERT INTO UnitOfMeasure (UnitOfMeasureId, Code, Name) VALUES (2, 'Gr', 'Gramos');
+INSERT INTO UnitOfMeasure (UnitOfMeasureId, Code, Name) VALUES (3, 'Lt', 'Litros');
+INSERT INTO UnitOfMeasure (UnitOfMeasureId, Code, Name) VALUES (4, 'Ml', 'Militros');
+INSERT INTO UnitOfMeasure (UnitOfMeasureId, Code, Name) VALUES (5, 'Und', 'Unidades');
+INSERT INTO UnitOfMeasure (UnitOfMeasureId, Code, Name) VALUES (6, 'Cja', 'Caja');
+
+-- Factores de Conversión por producto (Ejemplos)
+INSERT INTO UnitConversionFactor (UnitConversionFactorId, ProductId, FromUnitId, ToUnitId, Factor) VALUES (1, 1013, 6, 1, 5.0000);  -- 1 Caja de Harina = 5 Kg
+INSERT INTO UnitConversionFactor (UnitConversionFactorId, ProductId, FromUnitId, ToUnitId, Factor) VALUES (2, 1019, 3, 4, 1000.0000);-- 1 Lt Aceite = 1000 Ml
+INSERT INTO UnitConversionFactor (UnitConversionFactorId, ProductId, FromUnitId, ToUnitId, Factor) VALUES (3, 1005, 1, 2, 1000.0000);-- 1 Kg Carne = 1000 Gr
+
+-- ============================================================================
+-- 4. INVENTARIOS Y CONTEOS (Existente)
+-- ============================================================================
 INSERT INTO InventoryBalance (InventoryId, LocationId, ProductId, Quantity, Lot, ExpiryDate) VALUES (1, 1, 1001, 120.50, 'L001', '2026-12-31');
 INSERT INTO InventoryBalance (InventoryId, LocationId, ProductId, Quantity, Lot, ExpiryDate) VALUES (2, 1, 1002, 45.00, 'L002', '2026-09-20');
 INSERT INTO InventoryBalance (InventoryId, LocationId, ProductId, Quantity, Lot, ExpiryDate) VALUES (3, 2, 1003, 60.00, 'L003', '2026-10-05');
@@ -169,13 +196,51 @@ INSERT INTO InventoryCountDetail (DetailId, CountId, ProductId, Quantity) VALUES
 INSERT INTO InventoryCountDetail (DetailId, CountId, ProductId, Quantity) VALUES (2, 1, 1002, 45.0);
 INSERT INTO InventoryCountDetail (DetailId, CountId, ProductId, Quantity) VALUES (3, 2, 1007, 82.4);
 
-INSERT INTO Recipe (RecipeId, Name, YieldPct) VALUES (1, 'Margherita Pizza', 92.5);
-INSERT INTO RecipeIngredient (RecipeId, ProductId, Quantity) VALUES (1, 1013, 2.0);
-INSERT INTO RecipeIngredient (RecipeId, ProductId, Quantity) VALUES (1, 1019, 0.5);
-INSERT INTO RecipeIngredient (RecipeId, ProductId, Quantity) VALUES (1, 1010, 0.3);
+-- ============================================================================
+-- 5. RECETAS, INGREDIENTES Y PRODUCCIÓN CON RENDIMIENTO/YIELD (AJUSTADO)
+-- ============================================================================
+-- Receta 1: Margherita Pizza
+INSERT INTO Recipe (RecipeId, Name, PosPluCode, YieldQuantity, StandardYieldPct, EstimatedCost) 
+VALUES (1, 'Margherita Pizza', 'PLU-101', 1, 92.50, 4.50);
 
-INSERT INTO ProductionOrder (ProductionId, RecipeId, QuantityProduced) VALUES (1, 1, 120.0);
+-- Receta 2: Beef Burger Deluxe
+INSERT INTO Recipe (RecipeId, Name, PosPluCode, YieldQuantity, StandardYieldPct, EstimatedCost) 
+VALUES (2, 'Beef Burger Deluxe', 'PLU-102', 1, 88.00, 6.20);
+
+-- Ingredientes Margherita Pizza (Flour 5kg, Olive Oil 1L, Tomatoes 1kg)
+INSERT INTO RecipeIngredient (RecipeItemId, RecipeId, ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct) 
+VALUES (1, 1, 1013, 0.2500, 1, 2.00); -- 250 Gr Harina (Kg)
+INSERT INTO RecipeIngredient (RecipeItemId, RecipeId, ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct) 
+VALUES (2, 1, 1019, 0.0300, 3, 0.00); -- 30 Ml Aceite Olive (Lt)
+INSERT INTO RecipeIngredient (RecipeItemId, RecipeId, ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct) 
+VALUES (3, 1, 1007, 0.1500, 1, 5.00); -- 150 Gr Tomate (Kg)
+
+-- Ingredientes Beef Burger Deluxe (Ground Beef 1kg, Cheddar Cheese 500g, Lettuce)
+INSERT INTO RecipeIngredient (RecipeItemId, RecipeId, ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct) 
+VALUES (4, 2, 1005, 0.2000, 1, 10.00); -- 200 Gr Carne Molida
+INSERT INTO RecipeIngredient (RecipeItemId, RecipeId, ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct) 
+VALUES (5, 2, 1002, 0.0500, 1, 2.00);  -- 50 Gr Queso Cheddar
+INSERT INTO RecipeIngredient (RecipeItemId, RecipeId, ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct) 
+VALUES (6, 2, 1008, 0.2500, 5, 8.00);  -- 0.25 Unidades Lechuga
+
+-- Órdenes de Producción (Entrada bruta, Salida útil obtenida y Rendimiento Real calculado)
+INSERT INTO ProductionOrder (ProductionId, SiteId, RecipeId, RawMaterialUsedQty, UsefulOutputQty, ActualYieldPct, ProductionDate) 
+VALUES (1, 2, 1, 130.0000, 120.0000, 92.31, '2026-07-20 10:00:00');
+
+INSERT INTO ProductionOrder (ProductionId, SiteId, RecipeId, RawMaterialUsedQty, UsefulOutputQty, ActualYieldPct, ProductionDate) 
+VALUES (2, 2, 2, 50.0000, 43.5000, 87.00, '2026-07-22 14:30:00');
+
+-- ============================================================================
+-- 6. MERMAS Y REGISTRO DE VENTAS DEL POS (AJUSTADO Y NUEVO)
+-- ============================================================================
 INSERT INTO WasteLog (WasteId, Category, Reason, Quantity, Cost) VALUES (1, 'Food', 'Expired cheese', 12.5, 45.0);
 INSERT INTO WasteLog (WasteId, Category, Reason, Quantity, Cost) VALUES (2, 'Inventory', 'Damaged packaging', 8.0, 22.0);
+
+-- Ventas reportadas por el Punto de Venta (POS) para calcular Consumo Teórico
+INSERT INTO PosSaleItem (SaleItemId, SiteId, PluCode, QuantitySold, SaleDate) 
+VALUES (1, 2, 'PLU-101', 85.00, '2026-07-25 21:00:00');
+
+INSERT INTO PosSaleItem (SaleItemId, SiteId, PluCode, QuantitySold, SaleDate) 
+VALUES (2, 2, 'PLU-102', 40.00, '2026-07-25 21:00:00');
 
 COMMIT;

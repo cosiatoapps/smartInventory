@@ -590,3 +590,29 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.admin-menu-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sub-menu {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sub-menu li {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  transition: all 0.2s ease;
+}
+
+.sub-menu li:hover,
+.sub-menu li.active-sub {
+  background: #ffd000;
+  color: #102a43;
+  font-weight: 700;
+  transform: translateX(4px);
+}

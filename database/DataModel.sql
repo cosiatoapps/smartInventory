@@ -1,3 +1,8 @@
+-- ============================================================================
+-- SMARTINVENTORY AI - DATAMODEL COMPLETO
+-- ============================================================================
+
+-- 1. ESTRUCTURA CORPORATIVA Y UBICACIONES
 CREATE TABLE Company(
     CompanyId INTEGER PRIMARY KEY,
     Name VARCHAR(200) NOT NULL,
@@ -38,11 +43,18 @@ CREATE TABLE Location(
 );
 CREATE INDEX IX_Location_WarehouseId ON Location(WarehouseId);
 
+-- 2. CATEGORÍAS, UNIDADES DE MEDIDA Y PRODUCTOS
 CREATE TABLE Category(
     CategoryId INTEGER PRIMARY KEY,
     Name VARCHAR(100) NOT NULL
 );
 CREATE UNIQUE INDEX UX_Category_Name ON Category(Name);
+
+CREATE TABLE UnitOfMeasure (
+    UnitOfMeasureId INTEGER PRIMARY KEY,
+    Code VARCHAR(20) NOT NULL UNIQUE,  -- Ej: Kg, Gr, Lt, Ml, Und, Cja
+    Name VARCHAR(100) NOT NULL         -- Ej: Kilogramos, Gramos, etc.
+);
 
 CREATE TABLE Product(
     ProductId INTEGER PRIMARY KEY,
@@ -53,6 +65,20 @@ CREATE TABLE Product(
 );
 CREATE UNIQUE INDEX UX_Product_SKU ON Product(SKU);
 
+-- Factores de conversión de unidades por producto
+CREATE TABLE UnitConversionFactor (
+    UnitConversionFactorId INTEGER PRIMARY KEY,
+    ProductId INTEGER NOT NULL,
+    FromUnitId INTEGER NOT NULL,
+    ToUnitId INTEGER NOT NULL,
+    Factor DECIMAL(18,4) NOT NULL,
+    FOREIGN KEY (ProductId) REFERENCES Product(ProductId) ON DELETE CASCADE,
+    FOREIGN KEY (FromUnitId) REFERENCES UnitOfMeasure(UnitOfMeasureId),
+    FOREIGN KEY (ToUnitId) REFERENCES UnitOfMeasure(UnitOfMeasureId)
+);
+CREATE INDEX IX_UnitConversionFactor_ProductId ON UnitConversionFactor(ProductId);
+
+-- 3. INVENTARIOS Y CONTEOS FISICOS
 CREATE TABLE InventoryBalance(
     InventoryId INTEGER PRIMARY KEY,
     LocationId INTEGER NOT NULL,
@@ -80,30 +106,46 @@ CREATE TABLE InventoryCountDetail(
     FOREIGN KEY (ProductId) REFERENCES Product(ProductId) ON DELETE CASCADE
 );
 
-CREATE TABLE Recipe(
+-- 4. FICHA TECNICA, RECETAS Y PRODUCCION (MOTOR DE RENDIMIENTO Y YIELD)
+CREATE TABLE Recipe (
     RecipeId INTEGER PRIMARY KEY,
     Name VARCHAR(200) NOT NULL,
-    YieldPct DECIMAL(5,2) NOT NULL
+    PosPluCode VARCHAR(50),               -- Código de integración con el POS (Punto de Venta)
+    YieldQuantity INTEGER NOT NULL DEFAULT 1, -- Porciones generadas
+    StandardYieldPct DECIMAL(5,2) NOT NULL DEFAULT 100.00, -- Rendimiento esperado (%)
+    EstimatedCost DECIMAL(18,2) DEFAULT 0.00
 );
+CREATE INDEX IX_Recipe_PosPluCode ON Recipe(PosPluCode);
 
-CREATE TABLE RecipeIngredient(
+CREATE TABLE RecipeIngredient (
+    RecipeItemId INTEGER PRIMARY KEY,
     RecipeId INTEGER NOT NULL,
     ProductId INTEGER NOT NULL,
-    Quantity DECIMAL(18,2) NOT NULL,
+    Quantity DECIMAL(18,4) NOT NULL,     -- Cantidad en unidad de consumo
+    UnitOfMeasureId INTEGER NOT NULL,    -- Unidad de Medida
+    ExpectedWastePct DECIMAL(5,2) NOT NULL DEFAULT 0.00, -- Merma esperada
     FOREIGN KEY (RecipeId) REFERENCES Recipe(RecipeId) ON DELETE CASCADE,
-    FOREIGN KEY (ProductId) REFERENCES Product(ProductId) ON DELETE CASCADE
+    FOREIGN KEY (ProductId) REFERENCES Product(ProductId) ON DELETE CASCADE,
+    FOREIGN KEY (UnitOfMeasureId) REFERENCES UnitOfMeasure(UnitOfMeasureId)
 );
 CREATE INDEX IX_RecipeIngredient_RecipeId ON RecipeIngredient(RecipeId);
 CREATE INDEX IX_RecipeIngredient_ProductId ON RecipeIngredient(ProductId);
 
-CREATE TABLE ProductionOrder(
+CREATE TABLE ProductionOrder (
     ProductionId INTEGER PRIMARY KEY,
+    SiteId INTEGER NOT NULL,
     RecipeId INTEGER NOT NULL,
-    QuantityProduced DECIMAL(18,2) NOT NULL,
+    RawMaterialUsedQty DECIMAL(18,4) NOT NULL, -- Entrada bruta (Ej: 10 Kg de papa)
+    UsefulOutputQty DECIMAL(18,4) NOT NULL,    -- Salida útil obtenida (Ej: 8.2 Kg pelada)
+    ActualYieldPct DECIMAL(5,2) NOT NULL,       -- Rendimiento Real (%)
+    ProductionDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (SiteId) REFERENCES Site(SiteId) ON DELETE CASCADE,
     FOREIGN KEY (RecipeId) REFERENCES Recipe(RecipeId) ON DELETE CASCADE
 );
+CREATE INDEX IX_ProductionOrder_SiteId ON ProductionOrder(SiteId);
 CREATE INDEX IX_ProductionOrder_RecipeId ON ProductionOrder(RecipeId);
 
+-- 5. CONTROL DE MERMAS Y VENTAS DEL POS
 CREATE TABLE WasteLog(
     WasteId INTEGER PRIMARY KEY,
     Category VARCHAR(100) NOT NULL,
@@ -112,6 +154,17 @@ CREATE TABLE WasteLog(
     Cost DECIMAL(18,2) NOT NULL
 );
 
+CREATE TABLE PosSaleItem (
+    SaleItemId INTEGER PRIMARY KEY,
+    SiteId INTEGER NOT NULL,
+    PluCode VARCHAR(50) NOT NULL,
+    QuantitySold DECIMAL(18,2) NOT NULL,
+    SaleDate DATETIME NOT NULL,
+    FOREIGN KEY (SiteId) REFERENCES Site(SiteId) ON DELETE CASCADE
+);
+CREATE INDEX IX_PosSaleItem_SiteId_Date ON PosSaleItem(SiteId, SaleDate);
+
+-- 6. USUARIOS Y PERMISOS
 CREATE TABLE Profile(
     ProfileId INTEGER PRIMARY KEY,
     Name VARCHAR(100) NOT NULL,
