@@ -85,9 +85,44 @@ Este repositorio ya incluye plantillas para infraestructura en:
 - [infrastructure/bicep/main.bicep](infrastructure/bicep/main.bicep)
 - [infrastructure/terraform/dev/main.tf](infrastructure/terraform/dev/main.tf)
 
-# Agentic Enterprise Repository v2.0
-Multi-agent platform for SmartInventory AI.
-Includes DDD, Hexagonal Architecture, DevSecOps, AI Foundry and Copilot governance.
 
-# Agentic Enterprise Repository v3.0
-Runtime-ready foundation with specialized agents, React/.NET structure, DevSecOps and AI governance.
+## 🚀 Novedades de la Iteración 2 (Gestión de Fichas Técnicas y Recetas)
+En esta segunda versión se ha implementado la gestión completa de **Fichas Técnicas y Recetas**, conectando los componentes visuales con los servicios de backend SQLite y la API de Producción.
+
+### 🌟 Características Clave Agregadas:
+1. **Módulo de Creación de Recetas (`RecipeBuilderModule`)**:
+   - Construcción interactiva de fichas técnicas seleccionando insumos reales del catálogo.
+   - Definición de consumo teórico, unidades de medida y porcentajes de merma esperada.
+   - Cálculo del rendimiento estándar de la preparación.
+
+2. **Panel de Edición y Detalle de Ingredientes (`RecipesModule`)**:
+   - Visualización responsiva de recetas y número de insumos asociados.
+   - Modal amplio (hasta 1100px / 90% viewport) para inspección y edición fluida de ingredientes.
+   - Edición en tiempo real de **Cantidades**, **Unidades de Medida** y **% Merma Esperada** con sincronización en SQLite.
+
+3. **Optimizaciones de Tipado y Tolerancia a Fallos**:
+   - Refactorización de tipos TypeScript (`Recipe`, `RecipeIngredient`, `AdminItem`).
+   - Manejo defensivo contra valores nulos/indefinidos (`null-safety`) en precios, costos y porcentajes de rendimiento (`toFixed`).
+
+4. **Mejoras en el Backend (`Production.Api`)**:
+   - Inclusión de endpoints `GET`, `POST` y `PUT` con consultas multi-tabla (`LEFT JOIN` a `RecipeIngredient` y `Product`).
+   - Gestión relacional para tablas de unidades de medida (`UnitOfMeasure`) y factores de conversión.
+
+---
+
+## 🛠️ Arquitectura de Microservicios
+
+| Servicio | Puerto | Descripción |
+| :--- | :--- | :--- |
+| **Inventory.Api** | `5210` | Gestión de Stock, Catálogos MDM y Métricas de Inventario. |
+| **Production.Api**| `5229` / `5211` | Fichas Técnicas, Recetas, Componentes y Órdenes de Producción. |
+| **FoodCost.Api**  | `5205` / `5212` | Métricas de desperdicios (*Waste Logs*) y control de costos de alimentos. |
+
+---
+
+## 🗄️ Estructura de Base de Datos (Nuevas Tablas)
+
+* **`Recipe`**: Cabecera de la ficha técnica (PluCode, YieldQuantity, StandardYieldPct, EstimatedCost).
+* **`RecipeIngredient`**: Detalle relacional de insumos por receta (ProductId, Quantity, UnitOfMeasureId, ExpectedWastePct).
+* **`UnitOfMeasure`**: Maestro de unidades de medida (Kg, Gr, Lt, Ml, Und).
+* **`UnitConversionFactor`**: Factores de equivalencia para costeo y conversión de stock.
